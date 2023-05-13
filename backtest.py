@@ -20,7 +20,7 @@ strategy_results['cumulative_returns'] = (returns + 1).cumprod()
 
 print(strategy_results.tail(3))
 # Save the strategy results to a CSV file
-strategy_results.to_csv('backtest_results.csv')
+strategy_results.to_excel('backtest_results.xlsx', header=True, index=False)
 
     
 plot_results(strategy_results)

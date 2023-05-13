@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from plyer import notification
-from utils import get_live_data
+from utils import get_live_data, write_dataframe_to_excel
 import datetime as dt
 
 
@@ -134,15 +134,14 @@ def strategy(data, symbol=''):
     data['sl'] = sl_levels
     print(message)
 
-    return data, message
+    return data
 
 
-def start_bot(event, stock='^NSEI', interval='1m', call_back=None):
+def start_bot(event, stock='^NSEI', interval='1m'):
     while True:
         if event.is_set():
             break
         data = get_live_data(stock, interval)
         data = calculate_indicators(data)
-        strategy_results, message = strategy(data, symbol=stock)
-        if call_back is not None:
-            call_back(message)
+        strategy_results = strategy(data, symbol=stock)
+        write_dataframe_to_excel(strategy_results, f'{stock}', f'{interval}.xlsx' )
