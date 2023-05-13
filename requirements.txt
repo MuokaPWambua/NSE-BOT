@@ -5,6 +5,8 @@ cffi==1.15.1
 charset-normalizer==3.1.0
 contourpy==1.0.7
 cryptography==40.0.2
+cx-Freeze==6.14.9
+cx-Logging==3.1.0
 cycler==0.11.0
 et-xmlfile==1.1.0
 fonttools==4.39.4
@@ -23,6 +25,7 @@ openpyxl==3.1.2
 packaging==23.1
 pandas==2.0.1
 pandastable==0.13.1
+patchelf==0.17.2.1
 Pillow==9.5.0
 plyer==2.1.0
 pycparser==2.21
@@ -38,7 +41,3 @@ webencodings==0.5.1
 xlrd==2.0.1
 XlsxWriter==3.1.0
 yfinance==0.2.18
-
-# windows cx_Freeze dependencies
-cx_Logging >= 3.1        
-lief >= 0.12.0 
