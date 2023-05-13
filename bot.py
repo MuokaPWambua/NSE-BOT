@@ -1,12 +1,11 @@
-import os
 import pandas as pd
 import numpy as np
 from plyer import notification
-from utils import get_live_data, write_dataframe_to_excel
+from utils import get_live_data, resource_path, write_dataframe_to_excel
 import datetime as dt
 
 
-icon = os.path.join(os.getcwd(),"logo.ico")  # Replace with the path to your icon
+icon = resource_path("logo.ico")  # Replace with the path to your icon
 
 def bullish_pattern_sl(data):   
     if data.iloc[-2]['Close'] < data.iloc[-2]['Open'] and data.iloc[-1]['Close'] > data.iloc[-1]['Open']:
@@ -71,8 +70,8 @@ def strategy(data, symbol=''):
                 # Check for long entry condition
                 if prev_k < prev_d and curr_k > curr_d and bull_sl:
                     
-                    signals.append(1)  # Buy signal
-                    positions.append(1)  # Enter long position
+                    signals.append('Buy')  # Buy signal
+                    positions.append('Long')  # Enter long position
                     entry_levels.append(data['Close'][i])
                     sl_levels.append(bull_sl)
                     exit_levels.append(data['BB_upper'][i])  
@@ -86,9 +85,9 @@ def strategy(data, symbol=''):
                     
                 # Check for sell condition
                 elif prev_k > prev_d and curr_k < curr_d and bear_sl:
-                    signals.append(-1)  # Sell signal
+                    signals.append('Sell')  # Sell signal
                     sl_levels.append(bear_sl)
-                    positions.append(0)  # Enter short position
+                    positions.append('Short')  # Enter short position
                     entry_levels.append(data['Close'][i])  
                     exit_levels.append(data['BB_lower'][i])
                     message = f"📉 Sell {symbol} entry {data['Close'][i]} exit {data['BB_lower'][i]} sl {bear_sl} date {date}"
@@ -101,8 +100,8 @@ def strategy(data, symbol=''):
                     # TODO: Check for any long position running and exit
                 # No conditions found
                 else:
-                    positions.append(-1)
-                    signals.append(0)
+                    positions.append(None)
+                    signals.append(None)
                     entry_levels.append(0)
                     sl_levels.append(0)  
                     exit_levels.append(0)
@@ -110,8 +109,8 @@ def strategy(data, symbol=''):
                     print(message)
                     
             else:
-                signals.append(0)
-                positions.append(-1)
+                signals.append(None)
+                positions.append(None)
                 entry_levels.append(0)
                 exit_levels.append(0)
                 sl_levels.append(0)
@@ -119,8 +118,8 @@ def strategy(data, symbol=''):
                 print(message)
                 
         else:
-            signals.append(0)
-            positions.append(-1)
+            signals.append(None)
+            positions.append(None)
             entry_levels.append(0)
             exit_levels.append(0)
             sl_levels.append(0)

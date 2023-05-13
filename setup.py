@@ -2,27 +2,30 @@ import sys
 from cx_Freeze import setup, Executable
 
 # List of files to be included in the package
-files = ['/home/simba/Projects/Bot/run.py',
-        '/home/simba/Projects/Bot/virtual',
-        '/home/simba/Projects/Bot/bot.py', 
-        '/home/simba/Projects/Bot/logo.png', 
-        '/home/simba/Projects/Bot/backtest.py',
-        '/home/simba/Projects/Bot/__init__.py', 
-        '/home/simba/Projects/Bot/setting.py',
-        '/home/simba/Projects/Bot/utils.py',
-        '/home/simba/Projects/Bot/bot_interface.py']
+files = [
+    'run.py',
+    'bot.py',
+    'logo.ico', 
+    'backtest.py',
+    '__init__.py', 
+    'setting.py',
+    'utils.py',
+    'bot_interface.py']
 
 # Options for cx_Freeze
 options = {
     'build_exe': {
         'include_files': files,
-        'packages': ['os', 'sys', 'site'],
+        'packages': ['os', 'sys', 'site', 'tkinter'],
     }
 }
 
+# base="Win32GUI" should be used only for Windows GUI app
+base = "Win32GUI" if sys.platform == "win32" else None
+
 # Define the executable file
 executables = [
-    Executable('run.py', base=None)
+    Executable('run.py', base=base, icon='logo.ico')
 ]
 
 # Call the setup() function
