@@ -2,9 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 import pandas as pd
 import yfinance as yf
+from backtest import NSEStrategy
 from bot import start_bot
 import threading
 import uuid
+import backtrader as bt
+
+from utils import get_historical_data
 
 class TradingBotGUI:
     def __init__(self, master):
@@ -35,10 +39,14 @@ class TradingBotGUI:
         # Create "Run" button
         self.run_button = tk.Button(master, text="Run", command=self.run_bot)
         self.run_button.grid(row=3, column=0, padx=10, pady=10)
+
+        # Create "Run" button
+        self.test_button = tk.Button(master, text="Backtest", command=self.backtest)
+        self.test_button.grid(row=3, column=1, padx=10, pady=10)
         
         # Create "Stop All" button
         self.stop_button = tk.Button(master, text="Stop All", command=self.stop_all)
-        self.stop_button.grid(row=3, column=1, padx=10, pady=10)
+        self.stop_button.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
     
         self.treeview = ttk.Treeview(master, columns=('symbol', 'interval', 'status'))
         self.treeview.heading('symbol', text='Symbol')
@@ -59,14 +67,17 @@ class TradingBotGUI:
             
     def get_stock_names(self):
         # Get list of Indian stock symbols from Yahoo Finance
-        tickers = pd.read_html('https://ournifty.com/stock-list-in-nse-fo-futures-and-options.html#:~:text=NSE%20F%26O%20Stock%20List%3A%20%20%20%20SL,%20%201000%20%2052%20more%20rows%20')[0]
-        tickers = tickers.SYMBOL.to_list()
-        indian_stocks = [ticker + '.NS' for ticker in tickers]
-    
-        return indian_stocks
-
+        try:
+            tickers = pd.read_html('https://ournifty.com/stock-list-in-nse-fo-futures-and-options.html#:~:text=NSE%20F%26O%20Stock%20List%3A%20%20%20%20SL,%20%201000%20%2052%20more%20rows%20')[0]
+            tickers = tickers.SYMBOL.to_list()
+            indian_stocks = [ticker + '.NS' for ticker in tickers]
+        
+            return indian_stocks
+        except:
+            return []
+        
     def get_intervals(self):
-        return ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w', '1mnth']
+        return ['1m', '5m', '15m', '30m', '60m', '1h', '4h', '1d', '1wk', '1mo']
 
     def run_bot(self):
         # Get the selected stock symbol and interval from the dropdown menus
@@ -96,5 +107,22 @@ class TradingBotGUI:
         for thread_id in self.threads:
             self.threads[thread_id].join()
         self.status_label.config(text="Status: All threads stopped.")
+    
+    def backtest(self):
+        cerebro = bt.Cerebro()
+        symbol = self.stock_var.get()
+        cerebro.broker.setcash(100000.0)
+
+        self.status_label.config(text=f"Starting Portfolio Value:  {cerebro.broker.getvalue()}")
+        if not symbol:
+            return self.status_label.config(text='Select stock to run') 
         
+        data = bt.feeds.PandasData(dataname=get_historical_data(symbol)) #^NSEI
+        cerebro.adddata(data)
+        cerebro.addstrategy(NSEStrategy, symbol=symbol)
+        
+        cerebro.run()
+        self.status_label.config(text=f'Final Portfolio Value: {cerebro.broker.getvalue()}')
+
+        cerebro.plot()        
 
