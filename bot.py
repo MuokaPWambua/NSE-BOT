@@ -131,5 +131,7 @@ def start_bot(event, stock='^NSEI', interval='1m'):
         data = calculate_indicators(data)
         strategy_results = strategy(data, symbol=stock)
         
-        if strategy_results:
+        if strategy_results is None:
+            pass
+        else:
             write_dataframe_to_excel(strategy_results, f'{stock}', f'{interval}.xlsx' )
