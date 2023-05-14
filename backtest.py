@@ -1,27 +1,56 @@
 from bot import *
 from utils import *
-
-data = get_historical_data('^NSEI')
-data = calculate_indicators(data)
-
-strategy_results = strategy(data)
+import backtrader as bt
 
 
-positions = strategy_results.positions
-entry_levels = strategy_results.entry_levels
-exit_levels = strategy_results.exit_levels
-sl_levels = strategy_results.sl
-
-returns = pd.Series(0.0, index=positions.index)  # Initialize returns to 0
-entry_levels_valid = entry_levels != 0  # Check if entry levels are valid
-returns[entry_levels_valid] = positions.shift(1)[entry_levels_valid] * (exit_levels - entry_levels)[entry_levels_valid] / entry_levels[entry_levels_valid]
-
-strategy_results['cumulative_returns'] = (returns + 1).cumprod()
-
-
-print(strategy_results.tail(3))
-# Save the strategy results to a CSV file
-strategy_results.to_excel('backtest_results.xlsx', header=True, index=False)
-
+class NSEStrategy(bt.Strategy):
+    params = (
+        ('symbol', ''),
+    )
     
-plot_results(strategy_results)
+    def __init__(self):
+        data = pd.DataFrame({
+            'High': [x for x in self.datas[0].high],
+            'Close': [x for x in self.datas[0].close],
+            'Open': [x for x in self.datas[0].open],
+            'Low': [x for x in self.datas[0].low]
+            }, index=[x for x in self.datas[0]])
+        self.data = calculate_indicators(data).fillna(0)
+        self.order = None
+
+    def next(self):
+        # Get the current data and apply the strategy function
+        data = strategy(self.data)
+        
+        if data is not None:
+
+            # Check if there is a position to take
+            if data.iloc[-1]['position'] == 'Buy':
+                self.order = self.buy(price=data.iloc[-1]['entry'], exectype=bt.Order.Market)
+                self.sell(price=data.iloc[-1]['exit'], exectype=bt.Order.Limit, parent=self.order, transmit=False)
+                self.sell(price=data.iloc[-1]['sl'], exectype=bt.Order.Stop, parent=self.order, transmit=True)
+
+            elif data.iloc[-1]['position'] == 'Sell':
+                self.order = self.sell(price=data.iloc[-1]['entry'], exectype=bt.Order.Market)
+                self.buy(price=data['exit'].iloc[-1][0], exectype=bt.Order.Limit, parent=self.order, transmit=False)
+                self.buy(price=data['sl'].iloc[-1][0], exectype=bt.Order.Stop, parent=self.order, transmit=True)
+            excel_file_path = os.path.join(bot_dir, 'backtest.xlsx')
+            data.to_excel(excel_file_path, header=True, index=False, engine='openpyxl')
+            
+    def stop(self):
+        print('Finished')
+
+if __name__ == '__main__':
+    cerebro = bt.Cerebro()
+    cerebro.broker.setcash(100000.0)
+    data = bt.feeds.PandasData(dataname=get_historical_data('^NSEI'))
+    cerebro.adddata(data)
+    cerebro.addstrategy(NSEStrategy, symbol='^NSEI')
+
+    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+
+    cerebro.run()
+
+    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+
+    cerebro.plot()

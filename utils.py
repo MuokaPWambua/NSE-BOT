@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 import pandas as pd
 
+home_dir = os.path.expanduser("~")
+bot_dir = os.path.join(home_dir, "NSE BOT")
 
 def resource_path(relative_path):
     try:
@@ -14,7 +16,12 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def write_dataframe_to_excel(dataframe, directory, excel_file):
-    excel_file_path = os.path.join(directory, excel_file)
+    stock_dir = os.path.join(bot_dir, directory)
+
+    if not os.path.exists(stock_dir):
+        os.makedirs(stock_dir)    
+
+    excel_file_path = os.path.join(stock_dir, excel_file)
     
     if os.path.exists(excel_file_path):
         # Append the new dataframe to the existing Excel file
@@ -24,14 +31,11 @@ def write_dataframe_to_excel(dataframe, directory, excel_file):
             dataframe.to_excel(writer, header=False, startrow=startrow, index=False, engine='openpyxl')
         
     else:
-        # Create a new Excel workbook
-        if not os.path.exists(directory):
-            os.makedirs(directory)        
         dataframe.to_excel(excel_file_path, header=True, index=False, engine='openpyxl')
 
 
 # Define function to get historical OHLC data from Yahoo Finance
-def get_historical_data(symbol, start = '2010-05-01', end='2023-05-01', interval='1d'):
+def get_historical_data(symbol, start = '2022-05-01', end='2023-05-01', interval='1d'):
     data = yf.download(symbol, start=start, end=end, interval=interval)
     return data
 

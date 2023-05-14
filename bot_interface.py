@@ -9,7 +9,7 @@ import uuid
 class TradingBotGUI:
     def __init__(self, master):
         self.master = master
-        master.title("Trading Bot")
+        master.title("NSE BOT")
         master.geometry()
         master.pack_propagate(0)
         self.threads = {}
