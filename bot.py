@@ -51,7 +51,6 @@ def strategy(data, symbol=''):
     entry_levels = []
     exit_levels = []
     sl_levels = []
-    message = f'📡 Waiting for {symbol} signal...'
 
     for i in range(len(data)):
         # Check if current time is within market hours
@@ -70,68 +69,55 @@ def strategy(data, symbol=''):
                 # Check for long entry condition
                 if prev_k < prev_d and curr_k > curr_d and bull_sl:
                     
-                    signals.append('Buy')  # Buy signal
-                    positions.append('Long')  # Enter long position
+                    signals.append(1)
+                    positions.append('Buy')  # Enter long position
                     entry_levels.append(data['Close'][i])
                     sl_levels.append(bull_sl)
                     exit_levels.append(data['BB_upper'][i])  
                     message = f"📈 Buy {symbol} entry {data['Close'][i]} exit {data['BB_upper'][i]} sl {bull_sl} date {date}"
-                    notification.notify(
-                        title = f'{symbol} Signal 🤖',
-                        message = message,
-                        app_icon = icon)
-                    print(message)
+                    notification.notify(title = f'{symbol} Signal 🤖', message = message, app_icon = icon)
                     # TODO: Check for any short position running and exit 
                     
                 # Check for sell condition
                 elif prev_k > prev_d and curr_k < curr_d and bear_sl:
-                    signals.append('Sell')  # Sell signal
+                    signals.append(-1)
                     sl_levels.append(bear_sl)
-                    positions.append('Short')  # Enter short position
+                    positions.append('Sell')  # Enter short position
                     entry_levels.append(data['Close'][i])  
                     exit_levels.append(data['BB_lower'][i])
                     message = f"📉 Sell {symbol} entry {data['Close'][i]} exit {data['BB_lower'][i]} sl {bear_sl} date {date}"
-                    notification.notify(
-                        title=f'{symbol} Signal 🤖',
-                        message=message,
-                        app_icon=icon)
-                    print(message)
-                    
+                    notification.notify(title=f'{symbol} Signal 🤖', message=message, app_icon=icon)                
                     # TODO: Check for any long position running and exit
+                    
                 # No conditions found
                 else:
                     positions.append(None)
-                    signals.append(None)
+                    signals.append(0)
                     entry_levels.append(0)
                     sl_levels.append(0)  
                     exit_levels.append(0)
-                    message = f'📡 Waiting for {symbol} signal...'
-                    print(message)
-                    
             else:
-                signals.append(None)
+                signals.append(0)
                 positions.append(None)
                 entry_levels.append(0)
                 exit_levels.append(0)
                 sl_levels.append(0)
-                message = f'📡 Waiting for {symbol} signal...'
-                print(message)
                 
         else:
-            signals.append(None)
+            signals.append(0)
             positions.append(None)
             entry_levels.append(0)
             exit_levels.append(0)
             sl_levels.append(0)
-            message = f'📡 Waiting for {symbol} signal...'
-            print(message)
-    # Create a dataframe to store the signals, positions, entry levels, and exit levels
-    data['signals'] = signals
+    
+            
+    if sum(signals) == 0:
+        return None
+    
     data['positions'] = positions
     data['entry_levels'] = entry_levels
     data['exit_levels'] = exit_levels
     data['sl'] = sl_levels
-    print(message)
 
     return data
 
@@ -140,7 +126,10 @@ def start_bot(event, stock='^NSEI', interval='1m'):
     while True:
         if event.is_set():
             break
+        
         data = get_live_data(stock, interval)
         data = calculate_indicators(data)
         strategy_results = strategy(data, symbol=stock)
-        write_dataframe_to_excel(strategy_results, f'{stock}', f'{interval}.xlsx' )
+        
+        if strategy_results:
+            write_dataframe_to_excel(strategy_results, f'{stock}', f'{interval}.xlsx' )

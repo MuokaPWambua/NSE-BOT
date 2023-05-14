@@ -41,10 +41,10 @@ class TradingBotGUI:
         self.stop_button.grid(row=3, column=1, padx=10, pady=10)
     
         self.treeview = ttk.Treeview(master, columns=('symbol', 'interval', 'status'))
-        self.treeview.heading('#0', text='Thread ID')
         self.treeview.heading('symbol', text='Symbol')
         self.treeview.heading('interval', text='Interval')
         self.treeview.heading('status', text='Status')
+        self.treeview.heading('#0', text='Thread ID')
     
         self.treeview.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
@@ -73,7 +73,11 @@ class TradingBotGUI:
         symbol = self.stock_var.get()
         interval = self.interval_var.get()
         thread_id = str(uuid.uuid4())
-        self.threads[thread_id] = threading.Thread(target=start_bot, args=(self.stop_event,), kwargs=({"stock": symbol, 'interval':interval}))
+
+        self.threads[thread_id] = threading.Thread(
+            target=start_bot,
+            args=(self.stop_event,),
+            kwargs=({"stock": symbol, 'interval':interval,}))
         self.threads[thread_id].start()
         self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
         self.treeview.insert('', 'end', text=thread_id, values=(symbol, interval, 'Running'))

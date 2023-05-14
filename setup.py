@@ -13,10 +13,26 @@ files = [
     'bot_interface.py']
 
 # Options for cx_Freeze
+shortcut_table = [
+    ("DesktopShortcut", 
+    "DesktopFolder", "NSE BOT",
+    "TARGETDIR", "[TARGETDIR]run.exe",
+    None, None, None,"logo.ico",
+    None, None, 'TARGETDIR',),
+]
+
 options = {
     'build_exe': {
         'include_files': files,
         'packages': ['os', 'sys', 'site', 'tkinter'],
+    },
+    "bdist_msi": {
+        "upgrade_code": "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}",
+        "add_to_path": False,
+        "initial_target_dir": "[ProgramFilesFolder]\\My App",
+        "data": {
+            "Shortcut": shortcut_table,
+        },
     }
 }
 

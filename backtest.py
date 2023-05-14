@@ -6,6 +6,7 @@ data = calculate_indicators(data)
 
 strategy_results = strategy(data)
 
+
 positions = strategy_results.positions
 entry_levels = strategy_results.entry_levels
 exit_levels = strategy_results.exit_levels
