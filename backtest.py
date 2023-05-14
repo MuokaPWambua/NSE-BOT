@@ -24,17 +24,16 @@ class NSEStrategy(bt.Strategy):
         
         if data is not None:
             # Check if there is a position to take
-            if data['position'] == 'Buy':
-                self.order = self.buy(price=data['entry'], exectype=bt.Order.Market)
-                self.sell(price=data['exit'], exectype=bt.Order.Limit, parent=self.order, transmit=False)
-                self.sell(price=data['sl'], exectype=bt.Order.Stop, parent=self.order, transmit=True)
+            if data.iloc[-1]['position'] == 'Buy':
+                self.order = self.buy(price=data.iloc[-1]['entry'], exectype=bt.Order.Market)
+                self.sell(price=data.iloc[-1]['exit'], exectype=bt.Order.Limit, parent=self.order, transmit=False)
+                self.sell(price=data.iloc[-1]['sl'], exectype=bt.Order.Stop, parent=self.order, transmit=True)
 
-            else:
-                self.order = self.sell(price=data['entry'], exectype=bt.Order.Market)
-                self.buy(price=data['exit'], exectype=bt.Order.Limit, parent=self.order, transmit=False)
-                self.buy(price=data['sl'], exectype=bt.Order.Stop, parent=self.order, transmit=True)
-            
-            data = pd.DataFrame(data, index=[0])    
+            if data.iloc[-1]['position'] == 'Sell':
+                self.order = self.sell(price=data.iloc[-1]['entry'], exectype=bt.Order.Market)
+                self.buy(price=data.iloc[-1]['exit'], exectype=bt.Order.Limit, parent=self.order, transmit=False)
+                self.buy(price=data.iloc[-1]['sl'], exectype=bt.Order.Stop, parent=self.order, transmit=True)
+                
             excel_file_path = os.path.join(bot_dir, 'backtest.xlsx')
             data.to_excel(excel_file_path, header=True, index=False, engine='openpyxl')
             

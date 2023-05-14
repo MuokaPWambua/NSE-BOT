@@ -109,14 +109,14 @@ class TradingBotGUI:
         self.status_label.config(text="Status: All threads stopped.")
     
     def backtest(self):
-        cerebro = bt.Cerebro()
         symbol = self.stock_var.get()
-        cerebro.broker.setcash(100000.0)
-
-        self.status_label.config(text=f"Starting Portfolio Value:  {cerebro.broker.getvalue()}")
+        self.status_label.config(text='Running back test...') 
         if not symbol:
             return self.status_label.config(text='Select stock to run') 
-        
+
+        cerebro = bt.Cerebro()        
+        cerebro.broker.setcash(100000.0)
+        self.status_label.config(text=f"Starting Portfolio Value:  {cerebro.broker.getvalue()}")
         data = bt.feeds.PandasData(dataname=get_historical_data(symbol)) #^NSEI
         cerebro.adddata(data)
         cerebro.addstrategy(NSEStrategy, symbol=symbol)

@@ -35,7 +35,7 @@ def write_dataframe_to_excel(dataframe, directory, excel_file):
 
 
 # Define function to get historical OHLC data from Yahoo Finance
-def get_historical_data(symbol, start = '2010-05-01', interval='1d'):
+def get_historical_data(symbol, start = '2021-05-01', interval='1d'):
     data = yf.download(symbol, start=start, interval=interval)
     return data
 
