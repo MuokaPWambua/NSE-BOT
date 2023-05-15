@@ -7,14 +7,17 @@ import datetime as dt
 
 icon = resource_path("logo.ico")  # Replace with the path to your icon
 
-def bullish_pattern_sl(data):   
-    if data.iloc[-2]['Close'] < data.iloc[-2]['Open'] and data.iloc[-1]['Close'] > data.iloc[-1]['Open']:
-        return data.iloc[-1]['Low']
+def bullish_pattern_sl(data):
+    data = data.tail(2)   
+    if data.iloc[0]['Close'] < data.iloc[0]['Open'] and data.iloc[1]['Close'] > data.iloc[1]['Open']:
+        # print((data.iloc[1]['Low'] + data.iloc[0]['High'])/2)
+        return True
     return False
         
 def bearish_pattern_sl(data):
-    if data.iloc[-2]['Close'] > data.iloc[-2]['Open'] and data.iloc[-1]['Close'] < data.iloc[-1]['Open']:
-        return data.iloc[-1]['High']
+    if data.iloc[0]['Close'] > data.iloc[0]['Open'] and data.iloc[1]['Close'] < data.iloc[1]['Open']:
+        # print((data.iloc[1]['High'] + data.iloc[0]['Low'])/2)
+        return True
     return False
 
 def trading_hours():
@@ -50,15 +53,15 @@ def start_bot(event, stock='^NSEI', interval='1m'):
     while True:
         if event.is_set():
             break
-        # if trading_hours():        
-        data = get_live_data(stock, interval)
-        data = calculate_indicators(data)
-        data = strategy(data, symbol=stock)
-        
-        if data is None:
-            print (f"{stock} Waiting for signal...")
-        else:
-            write_dataframe_to_excel(data, f'{stock}', f'{interval}.xlsx' )
+        if trading_hours():        
+            data = get_live_data(stock, interval)
+            data = calculate_indicators(data)
+            data = strategy(data, symbol=stock)
+            
+            if isinstance(data, pd.core.frame.DataFrame):
+                write_dataframe_to_excel(data, f'{stock}', f'{interval}.xlsx' )
+            
+        print (f"{stock} Waiting for signal...")
             
                 
 
@@ -87,21 +90,23 @@ def strategy(data, symbol=''):
                 signals.append(1)
                 positions.append('Buy')  # Enter long position
                 entry_levels.append(data.iloc[i]['Close'])
-                sl_levels.append(bull_sl)
+                sl_levels.append(data.iloc[i]['Low'])
                 exit_levels.append(data.iloc[i]['BB_upper'])  
-                message = f"📈 Buy {symbol} entry {data.iloc[i]['Close']} exit {data.iloc[i]['BB_upper']} sl {bull_sl}"
+                message = f"📈 Buy {symbol} entry {data.iloc[i]['Close']} exit {data.iloc[i]['BB_upper']} sl {data.iloc[i]['Low']}"
                 notification.notify(title = f'{symbol} Signal 🤖', message = message, app_icon = icon)
+                print(message)
                 # TODO: Check for any short position running and exit 
                 
             # Check for sell condition
             elif prev_k > prev_d and curr_k < curr_d and bear_sl:
                 signals.append(-1)
-                sl_levels.append(bear_sl)
+                sl_levels.append(data.iloc[i]['High'])
                 positions.append('Sell')  # Enter short position
                 entry_levels.append(data.iloc[i]['Close'])  
                 exit_levels.append(data.iloc[i]['BB_lower'])
-                message = f"📉 Sell {symbol} entry {data.iloc[i]['Close']} exit {data.iloc[i]['BB_lower']} sl {bear_sl}"
+                message = f"📉 Sell {symbol} entry {data.iloc[i]['Close']} exit {data.iloc[i]['BB_lower']} sl {data.iloc[i]['High']}"
                 notification.notify(title=f'{symbol} Signal 🤖', message=message, app_icon=icon)                
+                print(message)
                 # TODO: Check for any long position running and exit
                 
             # No conditions found

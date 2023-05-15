@@ -71,7 +71,8 @@ class TradingBotGUI:
             tickers = pd.read_html('https://ournifty.com/stock-list-in-nse-fo-futures-and-options.html#:~:text=NSE%20F%26O%20Stock%20List%3A%20%20%20%20SL,%20%201000%20%2052%20more%20rows%20')[0]
             tickers = tickers.SYMBOL.to_list()
             indian_stocks = [ticker + '.NS' for ticker in tickers]
-        
+            indian_stocks = [s.replace('NIFTY.NS', '^NSEI') for s in indian_stocks]
+            indian_stocks = [s.replace('BANKNIFTY.NS', '^NSEBANK') for s in indian_stocks]
             return indian_stocks
         except:
             return []
@@ -83,16 +84,19 @@ class TradingBotGUI:
         # Get the selected stock symbol and interval from the dropdown menus
         symbol = self.stock_var.get()
         interval = self.interval_var.get()
-        thread_id = str(uuid.uuid4())
+        if not (symbol and interval):
+            self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
+        else:    
+            thread_id = str(uuid.uuid4())
 
-        self.threads[thread_id] = threading.Thread(
-            target=start_bot,
-            args=(self.stop_event,),
-            kwargs=({"stock": symbol, 'interval':interval,}))
-        self.threads[thread_id].start()
-        self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
-        self.treeview.insert('', 'end', text=thread_id, values=(symbol, interval, 'Running'))
-        
+            self.threads[thread_id] = threading.Thread(
+                target=start_bot,
+                args=(self.stop_event,),
+                kwargs=({"stock": symbol, 'interval':interval,}))
+            self.threads[thread_id].start()
+            self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
+            self.treeview.insert('', 'end', text=thread_id, values=(symbol, interval, 'Running'))
+            
     def stop_bot(self, thread_id):
         if thread_id in self.threads:
             self.threads[thread_id].join()
