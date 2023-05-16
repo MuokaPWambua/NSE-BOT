@@ -1,5 +1,5 @@
 # NSE BOT
-![Alt Text](https://github.com/MuokaPWambua/NSE-BOT/blob/main/image.pngimage.png)
+![Alt Text](image.png)
 #### How It Works
 This trading bot utilizes the stoch cross and candlestick pattern strategy to spot trading opportunities in
 NSE markets. Once it finds an opportunity it pops up a desktop notification and write its signals into an excel file. 
