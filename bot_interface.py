@@ -78,7 +78,7 @@ class TradingBotGUI:
             return []
         
     def get_intervals(self):
-        return ['1m', '5m', '15m', '30m', '60m', '1h', '4h', '1d', '1wk', '1mo']
+        return ['1m', '5m', '15m', '30m', '60m', '4h', '1d', '1wk', '1mo']
 
     def run_bot(self):
         # Get the selected stock symbol and interval from the dropdown menus

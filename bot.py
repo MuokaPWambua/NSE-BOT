@@ -1,22 +1,19 @@
 import pandas as pd
 import numpy as np
-from plyer import notification
-from utils import get_live_data, resource_path, write_dataframe_to_excel
+from utils import *
 import datetime as dt
-
+from plyer import notification
 
 icon = resource_path("logo.ico")  # Replace with the path to your icon
 
-def bullish_pattern_sl(data):
+def bullish_pattern(data):
     data = data.tail(2)   
     if data.iloc[0]['Close'] < data.iloc[0]['Open'] and data.iloc[1]['Close'] > data.iloc[1]['Open']:
-        # print((data.iloc[1]['Low'] + data.iloc[0]['High'])/2)
         return True
     return False
         
-def bearish_pattern_sl(data):
+def bearish_pattern(data):
     if data.iloc[0]['Close'] > data.iloc[0]['Open'] and data.iloc[1]['Close'] < data.iloc[1]['Open']:
-        # print((data.iloc[1]['High'] + data.iloc[0]['Low'])/2)
         return True
     return False
 
@@ -57,78 +54,56 @@ def start_bot(event, stock='^NSEI', interval='1m'):
             data = get_live_data(stock, interval)
             data = calculate_indicators(data)
             data = strategy(data, symbol=stock)
-            
+
             if isinstance(data, pd.core.frame.DataFrame):
-                write_dataframe_to_excel(data, f'{stock}', f'{interval}.xlsx' )
-            
-        print (f"{stock} Waiting for signal...")
-            
-                
+                write_dataframe_to_excel(data, 'NSE.xlsx' )
+            else:
+                print (f"{stock} Waiting for signal...")
 
 def strategy(data, symbol=''):
-    # Initialize empty lists to track signals and positions
-    signals = []
-    positions = []
-    entry_levels = []
-    exit_levels = []
-    sl_levels = []
-
-    for i in range(len(data)):
-        # Check if current time is within market hours    
+    for i in range(len(data)):    
         if i >= 21:
             # Get current and previous %K and %D values
             curr_k = data.iloc[i]['%K']
             prev_k = data.iloc[i-1]['%K']
             curr_d = data.iloc[i]['%D']
             prev_d = data.iloc[i-1]['%D']
-            bull_sl = bullish_pattern_sl(data)
-            bear_sl = bearish_pattern_sl(data)
-            
+            now = dt.datetime.now().time()
             # Check for long entry condition
-            if prev_k < prev_d and curr_k > curr_d and bull_sl:
+            if prev_k < prev_d and curr_k > curr_d and bullish_pattern(data):
                 
-                signals.append(1)
-                positions.append('Buy')  # Enter long position
-                entry_levels.append(data.iloc[i]['Close'])
-                sl_levels.append(data.iloc[i]['Low'])
-                exit_levels.append(data.iloc[i]['BB_upper'])  
                 message = f"📈 Buy {symbol} entry {data.iloc[i]['Close']} exit {data.iloc[i]['BB_upper']} sl {data.iloc[i]['Low']}"
-                notification.notify(title = f'{symbol} Signal 🤖', message = message, app_icon = icon)
-                print(message)
+                notification.notify(title=f'{symbol} Signal 🤖', message=message)
+                print(f'{symbol} Signal 🤖: {message}')
                 # TODO: Check for any short position running and exit 
-                
+                return pd.DataFrame({
+                    'Stock': symbol,
+                    'Positions': 'Buy',
+                    'Entry':data.iloc[i]['Close'],
+                    'Exit':data.iloc[i]['BB_upper'],
+                    'Stop Loss': data.iloc[i]['Low'],
+                    'Time': now,
+                    '%K': data.iloc[i]['%K'],
+                    '%D': data.iloc[i]['%D'],
+                    'LTP': data.iloc[i]['Close']
+                    }, index=[0])
+            
             # Check for sell condition
-            elif prev_k > prev_d and curr_k < curr_d and bear_sl:
-                signals.append(-1)
-                sl_levels.append(data.iloc[i]['High'])
-                positions.append('Sell')  # Enter short position
-                entry_levels.append(data.iloc[i]['Close'])  
-                exit_levels.append(data.iloc[i]['BB_lower'])
+            if prev_k > prev_d and curr_k < curr_d and bearish_pattern(data):
                 message = f"📉 Sell {symbol} entry {data.iloc[i]['Close']} exit {data.iloc[i]['BB_lower']} sl {data.iloc[i]['High']}"
-                notification.notify(title=f'{symbol} Signal 🤖', message=message, app_icon=icon)                
-                print(message)
+                notification.notify(title=f'{symbol} Signal 🤖', message=message)
+                print(f'{symbol} Signal 🤖: {message}')
                 # TODO: Check for any long position running and exit
+                return pd.DataFrame({
+                    'Stock': symbol,
+                    'Positions': 'Sell',
+                    'Entry':data.iloc[i]['Close'],
+                    'Exit':data.iloc[i]['BB_lower'],
+                    'Stop Loss': data.iloc[i]['High'],
+                    'Time': now,
+                    '%K': data.iloc[i]['%K'],
+                    '%D': data.iloc[i]['%D'],
+                    'LTP': data.iloc[i]['Close'],
+                    }, index=[0])
                 
-            # No conditions found
-            else:
-                positions.append(None)
-                signals.append(0)
-                entry_levels.append(0)
-                sl_levels.append(0)  
-                exit_levels.append(0)
-        else:
-            signals.append(0)
-            positions.append(None)
-            entry_levels.append(0)
-            exit_levels.append(0)
-            sl_levels.append(0)
-
-    if sum(signals) == 0:
-        return None
-    
-    data['position'] = positions
-    data['entry'] = entry_levels
-    data['exit'] = exit_levels
-    data['sl'] = sl_levels
-
-    return data
+            return None

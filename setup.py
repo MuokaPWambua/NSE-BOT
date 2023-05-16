@@ -26,7 +26,7 @@ shortcut_table = [
 options = {
     'build_exe': {
         'include_files': files,
-        'packages': ['os', 'sys', 'site', 'tkinter', 'backtrader'],
+        'packages': ['os', 'sys', 'site', 'tkinter', 'backtrader', 'plyer'],
     },
     "bdist_msi": {
         "upgrade_code": "{d42722e4-b464-46d8-bb7c-89f435c7c90d}",
