@@ -71,28 +71,32 @@ class TradingBotGUI:
             tickers = pd.read_html('https://ournifty.com/stock-list-in-nse-fo-futures-and-options.html#:~:text=NSE%20F%26O%20Stock%20List%3A%20%20%20%20SL,%20%201000%20%2052%20more%20rows%20')[0]
             tickers = tickers.SYMBOL.to_list()
             indian_stocks = [ticker + '.NS' for ticker in tickers]
-        
+            indian_stocks = [s.replace('NIFTY.NS', '^NSEI') for s in indian_stocks]
+            indian_stocks = [s.replace('BANKNIFTY.NS', '^NSEBANK') for s in indian_stocks]
             return indian_stocks
         except:
             return []
         
     def get_intervals(self):
-        return ['1m', '5m', '15m', '30m', '60m', '1h', '4h', '1d', '1wk', '1mo']
+        return ['1m', '5m', '15m', '30m', '60m', '4h', '1d', '1wk', '1mo']
 
     def run_bot(self):
         # Get the selected stock symbol and interval from the dropdown menus
         symbol = self.stock_var.get()
         interval = self.interval_var.get()
-        thread_id = str(uuid.uuid4())
+        if not (symbol and interval):
+            self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
+        else:    
+            thread_id = str(uuid.uuid4())
 
-        self.threads[thread_id] = threading.Thread(
-            target=start_bot,
-            args=(self.stop_event,),
-            kwargs=({"stock": symbol, 'interval':interval,}))
-        self.threads[thread_id].start()
-        self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
-        self.treeview.insert('', 'end', text=thread_id, values=(symbol, interval, 'Running'))
-        
+            self.threads[thread_id] = threading.Thread(
+                target=start_bot,
+                args=(self.stop_event,),
+                kwargs=({"stock": symbol, 'interval':interval,}))
+            self.threads[thread_id].start()
+            self.status_label.config(text=f"Status:Running bot for {symbol} with {interval} interval")
+            self.treeview.insert('', 'end', text=thread_id, values=(symbol, interval, 'Running'))
+            
     def stop_bot(self, thread_id):
         if thread_id in self.threads:
             self.threads[thread_id].join()
@@ -109,14 +113,14 @@ class TradingBotGUI:
         self.status_label.config(text="Status: All threads stopped.")
     
     def backtest(self):
-        cerebro = bt.Cerebro()
         symbol = self.stock_var.get()
-        cerebro.broker.setcash(100000.0)
-
-        self.status_label.config(text=f"Starting Portfolio Value:  {cerebro.broker.getvalue()}")
+        self.status_label.config(text='Running back test...') 
         if not symbol:
             return self.status_label.config(text='Select stock to run') 
-        
+
+        cerebro = bt.Cerebro()        
+        cerebro.broker.setcash(100000.0)
+        self.status_label.config(text=f"Starting Portfolio Value:  {cerebro.broker.getvalue()}")
         data = bt.feeds.PandasData(dataname=get_historical_data(symbol)) #^NSEI
         cerebro.adddata(data)
         cerebro.addstrategy(NSEStrategy, symbol=symbol)

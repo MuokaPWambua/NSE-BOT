@@ -15,13 +15,12 @@ def resource_path(relative_path):
         base_path = os.path.abspath('.')
     return os.path.join(base_path, relative_path)
 
-def write_dataframe_to_excel(dataframe, directory, excel_file):
-    stock_dir = os.path.join(bot_dir, directory)
+def write_dataframe_to_excel(dataframe, excel_file):
 
-    if not os.path.exists(stock_dir):
-        os.makedirs(stock_dir)    
+    if not os.path.exists(bot_dir):
+        os.makedirs(bot_dir)    
 
-    excel_file_path = os.path.join(stock_dir, excel_file)
+    excel_file_path = os.path.join(bot_dir, excel_file)
     
     if os.path.exists(excel_file_path):
         # Append the new dataframe to the existing Excel file
@@ -35,19 +34,12 @@ def write_dataframe_to_excel(dataframe, directory, excel_file):
 
 
 # Define function to get historical OHLC data from Yahoo Finance
-def get_historical_data(symbol, start = '2010-05-01', interval='1d'):
-    data = yf.download(symbol, start=start, interval=interval)
+def get_historical_data(symbol, start = '2019-05-01', end='2023-05-01', interval='1d'):
+    data = yf.download(symbol, start=start, end=end, interval=interval)
     return data
 
 def get_live_data(symbol, interval="1m", period="1d"):
-    ticker = yf.Ticker(symbol)
+    ticker = yf.Ticker(symbol, session=None)
     data = ticker.history(interval=interval, period=period)
     return data
 
-def plot_results(df):
-    fig, ax = plt.subplots(figsize=(12,8))
-    ax.plot(df)
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Cumulative Returns')
-    ax.set_title('Cumulative Returns of Strategy')
-    plt.show()
