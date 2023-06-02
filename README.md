@@ -6,7 +6,8 @@ NSE markets. Once it finds an opportunity it pops up a desktop notification and 
 With the ability to run check on multiple stocks and on different time intervals.
 
 #### How to Run 
-It can be run as a desktop app or a script. 
+It can be run as a desktop app or a script. The app will breake if its not connected to the internet, 
+make sure to be connected or update the code to handle network error 
 
 To run it as a script you will need:
   - `python -m venv virtual`
